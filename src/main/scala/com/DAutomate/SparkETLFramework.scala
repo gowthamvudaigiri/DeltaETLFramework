@@ -38,13 +38,13 @@ object SparkETLFramework {
     ETLTransformations
       .transformOverwrite(spark, spark.range(10).toDF("Col"), "wasbs://movies@gowthamdlstorage.blob.core.windows.net/OverwriteData")
 
-    spark.read.format("parquet").load("wasbs://movies@gowthamdlstorage.blob.core.windows.net/OverwriteData").orderBy(col("Col")).show(20)
 
-    spark.read.format("delta").load("wasbs://movies@gowthamdlstorage.blob.core.windows.net/AppendData").orderBy(col("Col")).show(20)
 
 
     val movieDF =spark.read.format("csv")
       .option("inferSchema","true")
+
+
       .option("sep","|")
       .option("header","true")
       .load("wasbs://movies@gowthamdlstorage.blob.core.windows.net/Movies")

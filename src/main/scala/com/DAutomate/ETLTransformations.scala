@@ -11,7 +11,6 @@ object ETLTransformations {
       .mode("append")
       .save(saveLocation)
 
-   DeltaTable.forPath(saveLocation).vacuum()
   }
 
   def transformOverwrite(spark:SparkSession, AppendDF : DataFrame , saveLocation: String ):Unit ={
@@ -22,6 +21,18 @@ object ETLTransformations {
       .mode("overwrite")
       .save(saveLocation)
 
-    DeltaTable.forPath(saveLocation).vacuum()
+  }
+
+  def transformSCD1(spark:SparkSession , TargetTable:DeltaTable , UpdateDF : DataFrame , JoinKeys :String , ColMapping: Map[String , String] ):Unit ={
+
+    TargetTable.as("Target")
+      .merge(UpdateDF.as("UpdateSor"), JoinKeys)
+      .whenMatched("Source.Checksum <> Target.Checksum")
+      .updateExpr(ColMapping)
+      .whenNotMatched()
+      .insertExpr(ColMapping)
+      .execute()
+
+
   }
 }
