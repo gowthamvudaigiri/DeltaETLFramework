@@ -23,16 +23,21 @@ object ETLTransformations {
 
   }
 
-  def transformSCD1(spark:SparkSession , TargetTable:DeltaTable , UpdateDF : DataFrame , JoinKeys :String , ColMapping: Map[String , String] ):Unit ={
+  def transformSCD1(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :String , ColMapping: Map[String , String] ):Unit ={
 
     TargetTable.as("Target")
-      .merge(UpdateDF.as("UpdateSor"), JoinKeys)
+      .merge(SourceDF.as("Source"), JoinKeys)
       .whenMatched("Source.Checksum <> Target.Checksum")
       .updateExpr(ColMapping)
       .whenNotMatched()
       .insertExpr(ColMapping)
       .execute()
 
-
   }
+
+  def transformSCD2(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String] , ColMapping: Map[String , String] ):Unit =
+  {
+    SourceDF.join(TargetTable.toDF, JoinKeys, "left_anti").show(100)
+  }
+
 }
