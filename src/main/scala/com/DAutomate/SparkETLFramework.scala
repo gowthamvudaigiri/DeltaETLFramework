@@ -43,7 +43,7 @@ object SparkETLFramework {
 
     val List = colList.map(name => col(name))
 
-    println(List.getClass.getT)
+    println(List.getClass.getTypeName)
 
     /*val sorDF =DeltaTable
       .forPath("wasbs://movies@gowthamdlstorage.blob.core.windows.net/MoviesData")
