@@ -26,8 +26,8 @@ object SparkETLFramework {
 
     configDeltaStore(spark, args(0))
 
-
-    UnitTestCase.ETLTransformation_transformAppend_Test(spark)
+    //UnitTestCase.ETLTransformation_transformAppend_Test(spark)
+    UnitTestCase.ETLTransformation_transformSCD2_Test(spark)
 
 
     spark.close()

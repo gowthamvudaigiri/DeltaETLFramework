@@ -15,6 +15,8 @@ object UnitTestCase {
 
   var movieSCD2: DataFrame =null
 
+  var movieUpdate:DataFrame =null
+
   val ColMapping: Map[String, String] = Map(
     "MovieID" -> "Source.MovieID",
     "MovieTitle" -> "Source.MovieTitle",
@@ -46,24 +48,32 @@ object UnitTestCase {
       .withColumn("EndDate", lit("9999-12-31 00:00:00").cast(TimestampType))
       .withColumn("CurrentIndicator", lit("true").cast(BooleanType))
 
+
+    movieDF.createOrReplaceTempView("Movies")
+
+    import spark.implicits._
+
+    movieUpdate =spark.sql("Select MovieID, Title, case when Year%2 =0 then add_months(ReleaseDate,120) else ReleaseDate end as ReleaseDate, IMDBURL, case when Year%2 =0 then Year+10 else Year end as Year  from Movies").toDF()
+
+
   }
 
 
   def ETLTransformation_transformAppend_Test(spark: SparkSession) :Unit ={
     generateDF(spark)
-    ETLTransformations.transformAppend(spark, movieDF, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieList")
-    ETLTransformations.transformAppend(spark, movieSCD1, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD1")
+    /*ETLTransformations.transformAppend(spark, movieDF, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieList")
+    ETLTransformations.transformAppend(spark, movieSCD1, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD1")*/
     ETLTransformations.transformAppend(spark, movieSCD2, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD2" )
-    movieDF.show
+    //movieDF.show
   }
 
 
   def ETLTransformation_transformOverwrite_Test(spark: SparkSession) :Unit ={
-
-    ETLTransformations.transformAppend(spark, movieDF, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieList")
-    ETLTransformations.transformAppend(spark, movieSCD1, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD1")
-    ETLTransformations.transformAppend(spark, movieSCD2, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD2" )
-
+    generateDF(spark)
+    /*ETLTransformations.transformOverwrite(spark, movieDF, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieList")
+    ETLTransformations.transformOverwrite(spark, movieSCD1, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD1")
+    ETLTransformations.transformOverwrite(spark, movieSCD2, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD2" )*/
+    ETLTransformations.transformOverwrite(spark, movieUpdate, "wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieUpdate" )
   }
 
   def ETLTransformation_transformSCD1_Test(spark: SparkSession) :Unit ={
@@ -79,11 +89,11 @@ object UnitTestCase {
   def ETLTransformation_transformSCD2_Test(spark: SparkSession)={
     ETLTransformations.transformSCD2(
       spark,
-      DeltaTable.forPath("wasbs://movies@gowthamdlstorage.blob.core.windows.net/MoviesSCD2Data"),
-      DeltaTable.forPath("wasbs://movies@gowthamdlstorage.blob.core.windows.net/MoviesData").toDF,
-      Seq("MovieID","ReleaseDate"),
-      ColMapping
-    )
+      DeltaTable.forPath("wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieListSCD2"),
+      DataFrameCRUD.generateDataFrameFromType(spark, DeltaTable.forPath("wasbs://movies@gowthamdlstorage.blob.core.windows.net/MovieUpdate").toDF, "SCD1"),
+      Seq("MovieID")
+      )
+
   }
 
   def generateColumnList(DFSchema : StructType) :Seq[Column] ={
