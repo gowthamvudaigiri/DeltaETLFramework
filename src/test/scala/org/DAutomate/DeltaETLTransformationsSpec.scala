@@ -10,6 +10,7 @@ class DeltaETLTransformationsSpec extends  AnyFunSpec  with SparkSessionWrapper 
   val log = Logger.getLogger("org")
   log.setLevel(Level.ERROR)
 
+
   describe("Test Append Transformation"){
 
     it("This should create a DeltaTable with Attributes MovieID, Title, ReleaseDate, Year with 1682 Records") {
