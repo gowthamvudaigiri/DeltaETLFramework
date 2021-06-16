@@ -9,12 +9,12 @@ import scala.collection.mutable.ListBuffer
 object DeltaETLTransformations {
 
 
-  def transformAppend(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, Type : String ="Default" ):Unit = {
-    CreateDeltaTable(spark, SourceDF, saveLocation, "append", Type)
+  def transformAppend(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, PartitionBy: Seq[String] =Seq(),  Type : String ="Default" ):Unit = {
+    CreateDeltaTable(spark, SourceDF, saveLocation, "append", PartitionBy, Type)
   }
 
-  def transformOverwrite(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, Type : String ="Regular" ):Unit ={
-    CreateDeltaTable(spark, SourceDF, saveLocation, "append", Type)
+  def transformOverwrite(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, PartitionBy: Seq[String] =Seq(),Type : String ="Regular" ):Unit ={
+    CreateDeltaTable(spark, SourceDF, saveLocation, "append", PartitionBy, Type)
   }
 
   def transformSCD1(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String] ):Unit ={
@@ -103,17 +103,26 @@ object DeltaETLTransformations {
 
   }
 
-  private def CreateDeltaTable(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, Mode:String, Type : String) :Unit ={
+  private def CreateDeltaTable(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, Mode:String, PartitionBy:Seq[String],  Type : String) :Unit ={
 
     if(Type!= "Default" && Type != "SCD1" && Type != "SCD2")
       throw new InvalidTypeException("Invalid Type Passed as Parameter. Allowed Type : Default | SCD1 | SCD2")
 
-    generateDataFrameUsingType(spark, SourceDF, Type)
-      .write
-      .format("delta")
-      .mode(Mode)
-      .save(saveLocation)
-  }
+    if(PartitionBy.nonEmpty)
+      generateDataFrameUsingType (spark, SourceDF, Type)
+        .write
+        .format ("delta")
+        .mode (Mode)
+        .partitionBy(PartitionBy :_ *)
+        .save (saveLocation)
+    else
+      generateDataFrameUsingType (spark, SourceDF, Type)
+        .write
+        .format ("delta")
+        .mode (Mode)
+        .save (saveLocation)
+
+   }
 
   implicit private[DAutomate] class InvalidTypeException(Message: String) extends Exception(Message){
 
