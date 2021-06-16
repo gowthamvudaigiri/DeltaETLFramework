@@ -2,7 +2,7 @@ package org.DAutomate
 import org.scalatest.funspec.AnyFunSpec
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
-import org.apache.spark.sql.functions.{to_date,col}
+import org.apache.spark.sql.functions.{to_date,col,year}
 
 
 import io.delta.tables.DeltaTable
@@ -10,14 +10,14 @@ class DeltaETLTransformationsSpec extends  AnyFunSpec  with SparkSessionWrapper 
   val log = Logger.getLogger("org")
   log.setLevel(Level.ERROR)
 
-
   describe("Test Append Transformation"){
 
     it("This should create a DeltaTable with Attributes MovieID, Title, ReleaseDate, Year with 1682 Records") {
       DeltaETLTransformations.transformAppend(spark,
         spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
         MoviesDelta,
-        Type="Default"
+        Type="Default",
+        PartitionBy = Seq("Year")
       )
 
       assert(DeltaTable.forPath(MoviesDelta).toDF.count() == 1682)
