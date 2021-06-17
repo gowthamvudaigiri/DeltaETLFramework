@@ -14,15 +14,15 @@ object DeltaETLTransformations {
   }
 
   def transformOverwrite(spark:SparkSession, SourceDF : DataFrame , saveLocation: String, PartitionBy: Seq[String] =Seq(),Type : String ="Regular" ):Unit ={
-    CreateDeltaTable(spark, SourceDF, saveLocation, "append", PartitionBy, Type)
+    CreateDeltaTable(spark, SourceDF, saveLocation, "overwrite", PartitionBy, Type)
   }
 
   def transformSCD1(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String] ):Unit ={
 
-    val ColMapping = generateColumnSourceTargetMapping(SourceDF.schema)
+    val ColMapping = generateColumnSourceTargetMapping(generateDataFrameUsingType(spark, SourceDF, "SCD1").schema)
 
     TargetTable.as("Target")
-      .merge(SourceDF.as("Source"), generateJoinCondition(JoinKeys))
+      .merge(generateDataFrameUsingType(spark, SourceDF, "SCD1").as("Source"), generateJoinCondition(JoinKeys))
       .whenMatched("Source.Checksum <> Target.Checksum")
       .updateExpr(ColMapping)
       .whenNotMatched()
@@ -34,15 +34,15 @@ object DeltaETLTransformations {
   def transformSCD2(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String]  ):Unit = {
 
     var JoinKeysWithChecksum :Seq[String] =JoinKeys.union(Seq("Checksum"))
-    val DFWithUpdateAndInsert= SourceDF
+    val DFWithUpdateAndInsert= generateDataFrameUsingType(spark, SourceDF, "SCD1")
       .join(TargetTable.toDF.where("CurrentIndicator = true"), JoinKeysWithChecksum , "left_anti")
-      .select(generateColumnList(SourceDF.schema):_*)
+      .select(generateColumnList(generateDataFrameUsingType(spark, SourceDF, "SCD1").schema):_*)
       .union(
 
     TargetTable.toDF.where("CurrentIndicator = true")
-      .join(SourceDF, JoinKeys, "left_semi")
-      .join(SourceDF, Seq("Checksum"), "left_anti")
-      .select(generateColumnList(SourceDF.schema):_*))
+      .join(generateDataFrameUsingType(spark, SourceDF, "SCD1"), JoinKeys, "left_semi")
+      .join(generateDataFrameUsingType(spark, SourceDF, "SCD1"), Seq("Checksum"), "left_anti")
+      .select(generateColumnList(generateDataFrameUsingType(spark, SourceDF, "SCD1").schema):_*))
       .withColumn("StartDate", current_timestamp())
       .withColumn("EndDate", lit("9999-12-31 00:00:00").cast(TimestampType))
       .withColumn("CurrentIndicator", lit("True").cast(BooleanType))
@@ -75,10 +75,8 @@ object DeltaETLTransformations {
   }
 
   private def generateColumnSourceTargetMapping(DFSchema : StructType) :Map[String, String] ={
-    var ColMapping: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map()
-    DFSchema.foreach(col =>{
-      ColMapping.put(col.name , "Source."+col.name)
-    })
+    var ColMapping: scala.collection.mutable.Map[String, String] = scala.collection.mutable.Map[String, String]()
+    DFSchema.foreach(col => ColMapping.update(col.name , s"Source.${col.name}"))
     ColMapping.toMap
   }
 
