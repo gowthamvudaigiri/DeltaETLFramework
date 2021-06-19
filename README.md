@@ -22,7 +22,7 @@ This method take 5 arguments out of which 2 are optional
 
 
 #### Example to Create Delta Table with type as Default Partition By Year
-```
+```scala
 import org.dautomate.DeltaETLTransformations._
 import io.delta.tables.DeltaTable
 
@@ -36,7 +36,11 @@ import io.delta.tables.DeltaTable
     val MoviesDeltaSCD2: String = TestResourcesPath +"/DeltaTables/MoviesDeltaSCD2"
 		
 transformAppend(spark,
-        spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
+        spark.read.format("csv")
+		.option("header","True")
+		.option("inferSchema","true")
+		.option("Sep",",")
+		.load(MoviesFilePath),
         MoviesDeltaSCD1,
         Type="Default",
         PartitionBy = Seq("Year")
@@ -44,17 +48,24 @@ transformAppend(spark,
 ```
 
 #### Example to Create Delta Table with type as SCD1 without Any Partitions
-```
+```scala
 transformAppend(spark,
-        spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
+        spark.read.format("csv")
+		.option("header","True")
+		.option("inferSchema","true")
+		.option("Sep",",").load(MoviesFilePath),
         MoviesDelta,
         Type="SCD1"
       )
 ```
 #### Example to Create Delta Table with type as SCD2 Partition by Year
-```
+```scala
 transformAppend(spark,
-        spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
+        spark.read.format("csv")
+		.option("header","True")
+		.option("inferSchema","true")
+		.option("Sep",",")
+		.load(MoviesFilePath),
         MoviesDeltaSCD2,
         Type="SCD2",
         PartitionBy = Seq("Year")
@@ -70,9 +81,12 @@ This method take 5 arguments out of which 2 are optional
 5. Type :String              -This is optional. Use this if you want to create Delta Table with Type1 or Type2 Attributes.
 
 #### Example to overwrite MoviesSCD1 Delta Table with type as SCD1 without Any Partitions
-```
+```scala
 transformOverwrite(spark,
-        spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
+        spark.read.format("csv")
+		.option("header","True")
+		.option("inferSchema","true")
+		.option("Sep",",").load(MoviesFilePath),
         MoviesDeltaSCD1,
         Type="SCD1"
       )
@@ -86,10 +100,12 @@ This method take 4 arguments
 4. JoinKeys:Seq[String]      - Key Attributes to perform SCD1.
 
 #### Example to perform SCD1 Merge Operation on MoviesSCD1 Delta Table using MoviesUpdated1 Dataframe
-```
+```scala
 transformSCD1(spark,
         DeltaTable.forPath(MoviesDeltaSCD1),
-        spark.read.format("csv").options(Map("sep"->",", "header" -> "true", "inferSchema" -> "true")).load(MoviesUpdate1FilePath),
+        spark.read.format("csv")
+		.options(Map("sep"->",", "header" -> "true", "inferSchema" -> "true"))
+		.load(MoviesUpdate1FilePath),
         Seq("MovieID")
 ```
 
@@ -101,10 +117,12 @@ This method take 4 arguments
 4. JoinKeys:Seq[String]      - Key Attributes to perform SCD1.
 
 #### Example to perform SCD2 Merge Operation on MoviesSCD2 Delta Table using MoviesUpdated1 Dataframe
-```
+```scala
 transformSCD2(spark,
         DeltaTable.forPath(MoviesDeltaSCD2),
-        spark.read.format("csv").options(Map("sep"->",", "header" -> "true", "inferSchema" -> "true")).load(MoviesUpdate1FilePath),
+        spark.read.format("csv")
+		.options(Map("sep"->",", "header" -> "true", "inferSchema" -> "true"))
+		.load(MoviesUpdate1FilePath),
         Seq("MovieID")
 ```
 
