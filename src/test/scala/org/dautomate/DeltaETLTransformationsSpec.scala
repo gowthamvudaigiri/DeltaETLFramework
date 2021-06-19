@@ -1,4 +1,4 @@
-package org.DAutomate
+package org.dautomate
 import org.scalatest.funspec.AnyFunSpec
 import org.apache.log4j.Logger
 import org.apache.log4j.Level

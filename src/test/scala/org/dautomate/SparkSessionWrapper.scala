@@ -1,4 +1,4 @@
-package org.DAutomate
+package org.dautomate
 import org.apache.spark.sql.SparkSession
 trait SparkSessionWrapper {
   val spark = SparkSession.builder()

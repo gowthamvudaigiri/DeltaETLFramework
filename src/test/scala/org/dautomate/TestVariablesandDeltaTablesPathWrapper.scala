@@ -1,4 +1,4 @@
-package org.DAutomate
+package org.dautomate
 
 import java.io.File
 import org.apache.commons.io.FileUtils

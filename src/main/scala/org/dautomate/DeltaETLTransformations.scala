@@ -1,4 +1,4 @@
-package org.DAutomate
+package org.dautomate
 
 import io.delta.tables.DeltaTable
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -33,7 +33,7 @@ object DeltaETLTransformations {
 
   def transformSCD2(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String]  ):Unit = {
 
-    var JoinKeysWithChecksum :Seq[String] =JoinKeys.union(Seq("Checksum"))
+    val JoinKeysWithChecksum :Seq[String] =JoinKeys.union(Seq("Checksum"))
     val DFWithUpdateAndInsert= generateDataFrameUsingType(spark, SourceDF, "SCD1")
       .join(TargetTable.toDF.where("CurrentIndicator = true"), JoinKeysWithChecksum , "left_anti")
       .select(generateColumnList(generateDataFrameUsingType(spark, SourceDF, "SCD1").schema):_*)
@@ -70,7 +70,7 @@ object DeltaETLTransformations {
   private def generateJoinCondition(JoinKeys :Seq[String] ): String ={
     var joinCondition :String =""
     JoinKeys.foreach(column => joinCondition += " Source."+ column +" = target." +column + " and")
-    return joinCondition.substring(1,joinCondition.length-3)
+   joinCondition.substring(1,joinCondition.length-3)
 
   }
 
@@ -122,9 +122,6 @@ object DeltaETLTransformations {
 
    }
 
-  implicit private[DAutomate] class InvalidTypeException(Message: String) extends Exception(Message){
-
-  }
-
+  implicit private[dautomate] class InvalidTypeException(Message: String) extends Exception(Message){}
 
 }
