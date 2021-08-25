@@ -10,21 +10,21 @@ class DeltaETLTransformationsSpec extends  AnyFunSpec  with SparkSessionWrapper 
   val log = Logger.getLogger("org")
   log.setLevel(Level.ERROR)
 
-  describe("Test Append Transformation"){
+  describe("Test Append Transformation") {
 
     it("This should create a DeltaTable with Attributes MovieID, Title, ReleaseDate, Year with 1682 Records") {
       DeltaETLTransformations.transformAppend(spark,
-        spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
+        spark.read.format("csv").option("header", "True").option("inferSchema", "true").option("Sep", ",").load(MoviesFilePath),
         MoviesDelta,
-        Type="Default",
+        Type = "Default",
         PartitionBy = Seq("Year")
       )
 
       assert(DeltaTable.forPath(MoviesDelta).toDF.count() == 1682)
-      assert( DeltaTable.forPath(MoviesDelta).toDF.schema.map(col => col.name) == MoviesExpectedColList )
+      assert(DeltaTable.forPath(MoviesDelta).toDF.schema.map(col => col.name) == MoviesExpectedColList)
     }
 
-    it("This should create a DeltaTable with Attributes MovieID, Title, ReleaseDate, Year, Checksum with 1682 Records") {
+   it("This should create a DeltaTable with Attributes MovieID, Title, ReleaseDate, Year, Checksum with 1682 Records") {
       DeltaETLTransformations.transformAppend(spark,
         spark.read.format("csv").option("header","True").option("inferSchema","true").option("Sep",",").load(MoviesFilePath),
         MoviesDeltaSCD1,
@@ -91,7 +91,7 @@ class DeltaETLTransformationsSpec extends  AnyFunSpec  with SparkSessionWrapper 
 
   }
 
-  describe("Test SCD1 Transformation") {
+ describe("Test SCD1 Transformation") {
 
     it("This should Update MovieID attribute in SCD1 DeltaTable from 1 to 10 to Year as 2000 and insert two new records with MovieID 2000, 2001"){
       DeltaETLTransformations.transformSCD1(spark,
@@ -136,10 +136,28 @@ class DeltaETLTransformationsSpec extends  AnyFunSpec  with SparkSessionWrapper 
         Seq("MovieID")
       )
 
+
       assert(DeltaTable.forPath(MoviesDeltaSCD2).toDF.count() == 1699)
       assert(DeltaTable.forPath(MoviesDeltaSCD2).toDF.filter("Year >=2000").count ==17)
       assert(DeltaTable.forPath(MoviesDeltaSCD2).toDF.filter("MovieID>=1 and MovieID<=15").count==30)
     }
   }
+
+  describe("Test CDC Transformatation") (
+
+    it("This should delete the records that did not exist in MovieDelete File and do required Updates and Inserts ") {
+      DeltaETLTransformations.transformCDC(spark,
+        DeltaTable.forPath(MoviesOverwrite),
+        spark.read.format("csv").options(Map("sep" -> ",", "header" -> "true", "inferSchema" -> "true")).load(MoviesDeleteFilePath),
+        Seq("MovieID")
+      )
+
+
+      assert(DeltaTable.forPath(MoviesOverwrite).toDF.count == 1674)
+      assert(DeltaTable.forPath(MoviesOverwrite).toDF.filter("MovieID = 1683") .count ==1)
+      assert(DeltaTable.forPath(MoviesOverwrite).toDF.filter("MovieID = 10 and Year =1997") .count ==1)
+    }
+
+  )
 
 }

@@ -67,6 +67,30 @@ object DeltaETLTransformations {
 
   }
 
+  def transformCDC(spark:SparkSession , TargetTable:DeltaTable , SourceDF : DataFrame , JoinKeys :Seq[String] ):Unit ={
+
+    val ColMapping = generateColumnSourceTargetMapping(generateDataFrameUsingType(spark, SourceDF, "Default").schema)
+
+    val TargetDataFrameWithDeleteIndicator = TargetTable.toDF.join(SourceDF , JoinKeys, "left_anti")
+        .withColumn("DeleteIndicator", lit("True"))
+        .union(SourceDF.withColumn("DeleteIndicator", lit("False"))
+        )
+
+
+
+    TargetTable.as("Target")
+      .merge( TargetDataFrameWithDeleteIndicator.as("Source") , generateJoinCondition(JoinKeys))
+      .whenMatched("Source.DeleteIndicator = True")
+      .delete()
+      .whenMatched()
+      .updateExpr(ColMapping)
+      .whenNotMatched()
+      .insertExpr(ColMapping)
+      .execute()
+
+
+  }
+
   private def generateJoinCondition(JoinKeys :Seq[String] ): String ={
     var joinCondition :String =""
     JoinKeys.foreach(column => joinCondition += " Source."+ column +" = target." +column + " and")

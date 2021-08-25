@@ -9,6 +9,7 @@ trait TestVariablesandDeltaTablesPathWrapper {
     val MoviesFilePath: String = TestResourcesPath + "/Movies.csv"
     val MoviesUpdate1FilePath: String = TestResourcesPath +"/MoviesUpdated1.csv"
     val MoviesUpdate2FilePath: String = TestResourcesPath +"/MoviesUpdated2.csv"
+    val MoviesDeleteFilePath: String = TestResourcesPath +"/MoviesDelete.csv"
     val MoviesDelta: String = TestResourcesPath +"/DeltaTables/MoviesDelta"
     val MoviesOverwrite: String = TestResourcesPath +"/DeltaTables/MoviesOverwrite"
     val MoviesDeltaSCD1: String = TestResourcesPath +"/DeltaTables/MoviesDeltaSCD1"
